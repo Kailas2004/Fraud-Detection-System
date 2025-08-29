@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transactions - Fraud Detection System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .fraud-status-fraudulent { color: #dc3545; font-weight: bold; }
+        .fraud-status-suspicious { color: #fd7e14; font-weight: bold; }
+        .fraud-status-legitimate { color: #198754; font-weight: bold; }
+        .fraud-status-pending { color: #6c757d; font-weight: bold; }
+        .amount-high { color: #dc3545; font-weight: bold; }
+        .amount-medium { color: #fd7e14; font-weight: bold; }
+        .amount-low { color: #198754; }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-shield-alt"></i> Fraud Detection System
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="/">Dashboard</a>
+                <a class="nav-link" href="/users">Users</a>
+                <a class="nav-link active" href="/transactions">Transactions</a>
+                <a class="nav-link" href="/fraud-rules">Rules</a>
+                <a class="nav-link" href="/fraud-dashboard">Fraud Monitor</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-12">
+                <h1><i class="fas fa-exchange-alt"></i> Transaction Monitor</h1>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="/">Dashboard</a></li>
+                        <li class="breadcrumb-item active">Transactions</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <div class="d-grid gap-2 d-md-block">
+                    <a href="/create-transaction" class="btn btn-success">
+                        <i class="fas fa-plus"></i> New Transaction
+                    </a>
+                    <button class="btn btn-outline-primary" onclick="refreshTransactions()">
+                        <i class="fas fa-sync"></i> Refresh
+                    </button>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-search"></i></span>
+                    <input type="text" class="form-control" id="searchInput" placeholder="Search transactions..." onkeyup="searchTransactions()">
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3 text-center">
+                                <h5 class="text-primary" th:text="${#lists.size(transactions)}">0</h5>
+                                <small>Total Transactions</small>
+                            </div>
+                            <div class="col-md-3 text-center">
+                                <h5 class="text-success" th:text="${#lists.size(#lists.select(transactions, t.fraudStatus == T(com.example.fraud_detection.model.FraudStatus).LEGITIMATE))}">0</h5>
+                                <small>Legitimate</small>
+                            </div>
+                            <div class="col-md-3 text-center">
+                                <h5 class="text-warning" th:text="${#lists.size(#lists.select(transactions, t.fraudStatus == T(com.example.fraud_detection.model.FraudStatus).SUSPICIOUS))}">0</h5>
+                                <small>Suspicious</small>
+                            </div>
+                            <div class="col-md-3 text-center">
+                                <h5 class="text-danger" th:text="${#lists.size(#lists.select(transactions, t.fraudStatus == T(com.example.fraud_detection.model.FraudStatus).FRAUDULENT))}">0</h5>
+                                <small>Fraudulent</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5><i class="fas fa-list"></i> All Transactions (<span th:text="${#lists.size(transactions)}">0</span>)</h5>
+                        <div class="btn-group btn-group-sm" role="group">
+                            <button type="button" class="btn btn-outline-secondary active" onclick="filterTransactions('all')">All</button>
+                            <button type="button" class="btn btn-outline-success" onclick="filterTransactions('LEGITIMATE')">Legitimate</button>
+                            <button type="button" class="btn btn-outline-warning" onclick="filterTransactions('SUSPICIOUS')">Suspicious</button>
+                            <button type="button" class="btn btn-outline-danger" onclick="filterTransactions('FRAUDULENT')">Fraudulent</button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover" id="transactionsTable">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>User</th>
+                                        <th>Amount</th>
+                                        <th>Type</th>
+                                        <th>Merchant</th>
+                                        <th>Status</th>
+                                        <th>Score</th>
+                                        <th>Time</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="transaction : ${transactions}" th:if="${!#lists.isEmpty(transactions)}" th:attr="data-status=${transaction.fraudStatus}">
+                                        <td th:text="${transaction.id}">1</td>
+                                        <td>
+                                            <a th:href="@{'/users/' + ${transaction.user.id}}" th:text="${transaction.user.fullName}">User Name</a>
+                                            <br><small class="text-muted" th:text="${transaction.user.username}">username</small>
+                                        </td>
+                                        <td>
+                                            <span th:class="${transaction.amount >= 10000 ? 'amount-high' : (transaction.amount >= 1000 ? 'amount-medium' : 'amount-low')}">
+                                                $<span th:text="${#numbers.formatDecimal(transaction.amount, 1, 2)}">100.00</span>
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-secondary" th:text="${transaction.transactionType}">PURCHASE</span>
+                                        </td>
+                                        <td>
+                                            <span th:text="${transaction.merchantName ?: 'N/A'}">Merchant</span>
+                                            <br><small class="text-muted" th:text="${transaction.merchantCategory ?: ''}">Category</small>
+                                        </td>
+                                        <td>
+                                            <span th:class="'fraud-status-' + ${#strings.toLowerCase(transaction.fraudStatus)}">
+                                                <i th:class="${transaction.fraudStatus == T(com.example.fraud_detection.model.FraudStatus).FRAUDULENT ? 'fas fa-times-circle' : 
+                                                              (transaction.fraudStatus == T(com.example.fraud_detection.model.FraudStatus).SUSPICIOUS ? 'fas fa-exclamation-triangle' : 
+                                                              (transaction.fraudStatus == T(com.example.fraud_detection.model.FraudStatus).LEGITIMATE ? 'fas fa-check-circle' : 'fas fa-clock'))}"></i>
+                                                <span th:text="${transaction.fraudStatus}">PENDING</span>
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="progress me-2" style="width: 60px; height: 20px;">
+                                                    <div class="progress-bar" 
+                                                         th:class="${transaction.fraudScore >= 80 ? 'bg-danger' : (transaction.fraudScore >= 50 ? 'bg-warning' : 'bg-success')}"
+                                                         th:style="'width: ' + ${transaction.fraudScore} + '%'"
+                                                         th:attr="aria-valuenow=${transaction.fraudScore}"
+                                                         aria-valuemin="0" aria-valuemax="100">
+                                                    </div>
+                                                </div>
+                                                <small th:text="${#numbers.formatDecimal(transaction.fraudScore, 1, 1)}">0.0</small>
+                                            </div>
+                                        </td>
+                                        <td th:text="${#temporals.format(transaction.transactionTime, 'MM/dd HH:mm')}">01/01 12:00</td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm" role="group">
+                                                <a th:href="@{'/transactions/' + ${transaction.id}}" class="btn btn-outline-primary btn-sm" title="View Details">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                <button class="btn btn-outline-info btn-sm" th:onclick="'reAnalyze(' + ${transaction.id} + ')'" title="Re-analyze">
+                                                    <i class="fas fa-sync"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr th:if="${#lists.isEmpty(transactions)}">
+                                        <td colspan="9" class="text-center text-muted">
+                                            <i class="fas fa-exchange-alt fa-3x mb-3 d-block"></i>
+                                            No transactions found. <a href="/create-transaction">Process the first transaction</a>.
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        function refreshTransactions() {
+            window.location.reload();
+        }
+
+        function searchTransactions() {
+            const input = document.getElementById('searchInput');
+            const filter = input.value.toLowerCase();
+            const table = document.getElementById('transactionsTable');
+            const rows = table.getElementsByTagName('tr');
+
+            for (let i = 1; i < rows.length; i++) {
+                const row = rows[i];
+                const cells = row.getElementsByTagName('td');
+                let match = false;
+
+                for (let j = 0; j < cells.length - 1; j++) {
+                    if (cells[j].textContent.toLowerCase().indexOf(filter) > -1) {
+                        match = true;
+                        break;
+                    }
+                }
+
+                row.style.display = match ? '' : 'none';
+            }
+        }
+
+        function filterTransactions(status) {
+            const table = document.getElementById('transactionsTable');
+            const rows = table.getElementsByTagName('tr');
+            const buttons = document.querySelectorAll('.btn-group button');
+
+            // Update button states
+            buttons.forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.textContent.trim() === (status === 'all' ? 'All' : status)) {
+                    btn.classList.add('active');
+                }
+            });
+
+            // Filter rows
+            for (let i = 1; i < rows.length; i++) {
+                const row = rows[i];
+                const rowStatus = row.getAttribute('data-status');
+                
+                if (status === 'all' || rowStatus === status) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            }
+        }
+
+        function reAnalyze(transactionId) {
+            if (confirm('Re-analyze this transaction for fraud?')) {
+                $.ajax({
+                    url: `/api/transactions/${transactionId}/analyze`,
+                    method: 'POST',
+                    success: function(response) {
+                        alert(`Transaction re-analyzed! New status: ${response.fraudStatus}, Score: ${response.fraudScore.toFixed(1)}`);
+                        location.reload();
+                    },
+                    error: function(xhr, status, error) {
+                        alert('Error re-analyzing transaction: ' + xhr.responseText);
+                    }
+                });
+            }
+        }
+    </script>
+</body>
+</html>

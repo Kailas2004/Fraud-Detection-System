@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Transaction - Fraud Detection System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-shield-alt"></i> Fraud Detection System
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="/">Dashboard</a>
+                <a class="nav-link" href="/users">Users</a>
+                <a class="nav-link" href="/transactions">Transactions</a>
+                <a class="nav-link" href="/fraud-rules">Rules</a>
+                <a class="nav-link" href="/fraud-dashboard">Fraud Monitor</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-12">
+                <h1><i class="fas fa-plus-circle"></i> Process New Transaction</h1>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="/">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="/transactions">Transactions</a></li>
+                        <li class="breadcrumb-item active">Create Transaction</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-credit-card"></i> Transaction Details
+                    </div>
+                    <div class="card-body">
+                        <form id="transactionForm">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="userId" class="form-label">User *</label>
+                                        <select class="form-select" id="userId" name="userId" required>
+                                            <option value="">Select User</option>
+                                            <option th:each="user : ${users}" th:value="${user.id}" th:text="${user.fullName + ' (' + user.username + ')'}">User Name</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="amount" class="form-label">Amount *</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text">$</span>
+                                            <input type="number" class="form-control" id="amount" name="amount" step="0.01" min="0.01" required>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="transactionType" class="form-label">Transaction Type *</label>
+                                        <select class="form-select" id="transactionType" name="transactionType" required>
+                                            <option value="">Select Type</option>
+                                            <option value="PURCHASE">Purchase</option>
+                                            <option value="WITHDRAWAL">Withdrawal</option>
+                                            <option value="TRANSFER">Transfer</option>
+                                            <option value="REFUND">Refund</option>
+                                            <option value="DEPOSIT">Deposit</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="merchantName" class="form-label">Merchant Name</label>
+                                        <input type="text" class="form-control" id="merchantName" name="merchantName" placeholder="e.g., Amazon, Walmart">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="merchantCategory" class="form-label">Merchant Category</label>
+                                        <select class="form-select" id="merchantCategory" name="merchantCategory">
+                                            <option value="">Select Category</option>
+                                            <option value="RETAIL">Retail</option>
+                                            <option value="GROCERY">Grocery</option>
+                                            <option value="RESTAURANT">Restaurant</option>
+                                            <option value="GAS">Gas Station</option>
+                                            <option value="ONLINE">Online</option>
+                                            <option value="ATM">ATM</option>
+                                            <option value="GAMBLING">Gambling</option>
+                                            <option value="CRYPTOCURRENCY">Cryptocurrency</option>
+                                            <option value="CASH_ADVANCE">Cash Advance</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="location" class="form-label">Location</label>
+                                        <input type="text" class="form-control" id="location" name="location" placeholder="City, State">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="cardNumberMasked" class="form-label">Card Number (Masked)</label>
+                                        <input type="text" class="form-control" id="cardNumberMasked" name="cardNumberMasked" placeholder="****-****-****-1234">
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="ipAddress" class="form-label">IP Address</label>
+                                        <input type="text" class="form-control" id="ipAddress" name="ipAddress" placeholder="192.168.1.1">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <a href="/transactions" class="btn btn-secondary me-md-2">Cancel</a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-check"></i> Process Transaction
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-info-circle"></i> Fraud Detection
+                    </div>
+                    <div class="card-body">
+                        <p class="small">This transaction will be automatically analyzed for fraud using the following criteria:</p>
+                        <ul class="small">
+                            <li><strong>Amount Threshold:</strong> Transactions over $10,000</li>
+                            <li><strong>Velocity Check:</strong> More than 5 transactions per hour</li>
+                            <li><strong>Merchant Category:</strong> High-risk categories</li>
+                            <li><strong>Time Pattern:</strong> Unusual hours (2AM-5AM)</li>
+                            <li><strong>Active Rules:</strong> Custom fraud rules</li>
+                        </ul>
+                        <div class="alert alert-info small">
+                            <i class="fas fa-lightbulb"></i> <strong>Tip:</strong> Test different scenarios to see how the fraud detection engine responds.
+                        </div>
+                    </div>
+                </div>
+
+                <div id="resultCard" class="card mt-3" style="display: none;">
+                    <div class="card-header">
+                        <i class="fas fa-chart-line"></i> Analysis Result
+                    </div>
+                    <div class="card-body" id="resultContent">
+                        <!-- Result will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $('#transactionForm').on('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = {
+                userId: parseInt($('#userId').val()),
+                amount: parseFloat($('#amount').val()),
+                transactionType: $('#transactionType').val(),
+                merchantName: $('#merchantName').val(),
+                merchantCategory: $('#merchantCategory').val(),
+                location: $('#location').val(),
+                cardNumberMasked: $('#cardNumberMasked').val(),
+                ipAddress: $('#ipAddress').val()
+            };
+
+            $.ajax({
+                url: '/api/transactions',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(formData),
+                success: function(response) {
+                    showResult(response);
+                },
+                error: function(xhr, status, error) {
+                    alert('Error processing transaction: ' + xhr.responseText);
+                }
+            });
+        });
+
+        function showResult(transaction) {
+            let statusClass = '';
+            let statusIcon = '';
+            
+            switch(transaction.fraudStatus) {
+                case 'FRAUDULENT':
+                    statusClass = 'text-danger';
+                    statusIcon = 'fas fa-times-circle';
+                    break;
+                case 'SUSPICIOUS':
+                    statusClass = 'text-warning';
+                    statusIcon = 'fas fa-exclamation-triangle';
+                    break;
+                case 'LEGITIMATE':
+                    statusClass = 'text-success';
+                    statusIcon = 'fas fa-check-circle';
+                    break;
+                default:
+                    statusClass = 'text-secondary';
+                    statusIcon = 'fas fa-question-circle';
+            }
+
+            const content = `
+                <p><strong>Transaction ID:</strong> ${transaction.id}</p>
+                <p><strong>Status:</strong> <span class="${statusClass}"><i class="${statusIcon}"></i> ${transaction.fraudStatus}</span></p>
+                <p><strong>Fraud Score:</strong> ${transaction.fraudScore.toFixed(1)}/100</p>
+                <p><strong>Amount:</strong> $${transaction.amount}</p>
+                ${transaction.fraudReason ? `<p><strong>Reason:</strong> ${transaction.fraudReason}</p>` : ''}
+                <a href="/transactions/${transaction.id}" class="btn btn-sm btn-outline-primary">View Details</a>
+            `;
+            
+            $('#resultContent').html(content);
+            $('#resultCard').show();
+            
+            // Reset form
+            this.reset();
+        }
+    </script>
+</body>
+</html>
